@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elias the Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="game-wrapper">
+    <canvas id="game-canvas"></canvas>
+    <div id="loading-screen">
+      <div id="loading-title">⚡ ELIAS THE GAME ⚡</div>
+      <div id="loading-sub">Trykk hvilken som helst tast for å starte</div>
+      <div id="loading-controls">
+        <div>🕹️ Piltaster — Beveg deg</div>
+        <div>⎵ Space — Angrip / Interager</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts loaded in order -->
+  <script src="js/input.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/world/tilemap.js"></script>
+  <script src="js/world/worldmap.js"></script>
+  <script src="js/world/interiors.js"></script>
+  <script src="js/entities/enemy.js"></script>
+  <script src="js/entities/boss.js"></script>
+  <script src="js/entities/npc.js"></script>
+  <script src="js/entities/player.js"></script>
+  <script src="js/ui/hud.js"></script>
+  <script src="js/ui/dialogue.js"></script>
+  <script src="js/ui/levelup.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
