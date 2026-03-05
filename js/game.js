@@ -29,6 +29,10 @@ const Game = {
     spawner: null,
     boss: null,
 
+    // Global modifiers
+    screenShake: 0,
+    globalStunTimer: 0,
+
     // UI state
     pendingBoss: false,
     bossQueue: [],
@@ -98,6 +102,19 @@ const Game = {
         }
         if (LevelUp.active || PowerAward.active) return;
 
+        // Inventory / Map full-screen overrides
+        if (Inventory.active) {
+            Inventory.update(dt);
+            return;
+        }
+        if (FullMap.active) {
+            FullMap.update(dt);
+            return;
+        }
+
+        if (this.screenShake > 0) this.screenShake -= dt;
+        if (this.globalStunTimer > 0) this.globalStunTimer -= dt;
+
         switch (this.state) {
             case STATE.OVERWORLD: this._updateOverworld(dt); break;
             case STATE.INTERIOR: this._updateInterior(dt); break;
@@ -107,8 +124,12 @@ const Game = {
     },
 
     _updateOverworld(dt) {
-        this.player.update(dt, this.currentMap);
-        this.spawner.update(dt, this.player, this.currentMap);
+        // Update environment & entities
+        this.player.update(dt, WorldMap);
+
+        // Time stop / sleep logic
+        const enemyDt = this.globalStunTimer > 0 ? 0 : dt;
+        this.spawner.update(enemyDt, this.player, WorldMap);
         Camera.follow(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2);
 
         // Update interior NPCs if in interior mode (handled separately)
@@ -117,6 +138,22 @@ const Game = {
         // Player attack input
         if (Input.isJust(' ')) {
             if (!Dialogue.active) this._handleSpaceOverworld();
+        }
+
+        // Active Power
+        if (Input.isJust('f') || Input.isJust('F')) {
+            this.player.useActivePower();
+        }
+
+        // Open UI
+        if (Input.isJust('b') || Input.isJust('B')) Inventory.active = true;
+        if (Input.isJust('m') || Input.isJust('M')) FullMap.active = true;
+
+        // CHEAT CODE
+        if (Input.isJust('l') || Input.isJust('L')) {
+            const results = this.player.cheatLevelUp(10);
+            this._handleLevelResults(results);
+            HUD.addFloater('CHEAT: +10 LVL', this.player.x, this.player.y, '#ff00ff');
         }
 
         // Check death
@@ -152,7 +189,8 @@ const Game = {
                 for (const e of this.spawner.enemies) {
                     if (!e.dead && !this.player.hitEntities.has(e.id) && rectsOverlap(ar, { x: e.x, y: e.y, w: e.w, h: e.h })) {
                         this.player.hitEntities.add(e.id);
-                        const dmg = 5 + this.player.level * 2;
+                        let dmg = 5 + this.player.level * 2;
+                        if (this.player.buffs && this.player.buffs.stjernekraft > 0) dmg *= 2; // Star power!
                         e.takeDamage(dmg);
                         HUD.addFloater(`${dmg}`, e.x + e.w / 2, e.y - 4, '#ff8040');
                     }
@@ -176,9 +214,25 @@ const Game = {
     _updateInterior(dt) {
         this.player.update(dt, this._interiorMap());
         Camera.follow(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2);
-        for (const npc of this.interiorNPCs) npc.update(dt);
+        const enemyDt = this.globalStunTimer > 0 ? 0 : dt;
+        for (const npc of this.interiorNPCs) npc.update(enemyDt);
 
         if (Input.isJust(' ')) this._handleSpaceInterior();
+
+        // Active Power (can use in caves too)
+        if (Input.isJust('f') || Input.isJust('F')) {
+            this.player.useActivePower();
+        }
+
+        // Open UI
+        if (Input.isJust('b') || Input.isJust('B')) Inventory.active = true;
+
+        // CHEAT CODE
+        if (Input.isJust('l') || Input.isJust('L')) {
+            const results = this.player.cheatLevelUp(10);
+            this._handleLevelResults(results);
+            HUD.addFloater('CHEAT: +10 LVL', this.player.x, this.player.y, '#ff00ff');
+        }
 
         // Handle E for exit
         if (Input.isJust('e') || Input.isJust('E')) {
@@ -194,28 +248,46 @@ const Game = {
     },
 
     _updateBoss(dt) {
-        if (!this.boss) return;
-        this.player.update(dt, this.currentMap);
-        this.boss.update(dt, this.player);
+        this.player.update(dt, WorldMap);
+        const enemyDt = this.globalStunTimer > 0 ? 0 : dt;
+        if (this.boss) this.boss.update(enemyDt, this.player);
         Camera.follow(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2);
 
         if (Input.isJust(' ')) this.player.startAttack();
 
+        // Active Power
+        if (Input.isJust('f') || Input.isJust('F')) {
+            this.player.useActivePower();
+        }
+
+        // Open UI
+        if (Input.isJust('b') || Input.isJust('B')) Inventory.active = true;
+
         // Hit detection: player attack vs boss
         const ar = this.player.getAttackRect();
-        if (ar && !this.boss.dead && !this.player.hitEntities.has('boss')) {
+        if (ar && this.boss && !this.boss.dead && !this.player.hitEntities.has('boss')) {
             if (rectsOverlap(ar, { x: this.boss.x, y: this.boss.y, w: this.boss.w, h: this.boss.h })) {
                 this.player.hitEntities.add('boss');
-                this.boss.takeDamage(5 + this.player.level * 2);
-                HUD.addFloater(`${5 + this.player.level * 2}`, this.boss.x + 16, this.boss.y - 4, '#ff8040');
+                let dmg = 5 + this.player.level * 2;
+                if (this.player.buffs && this.player.buffs.stjernekraft > 0) dmg *= 2; // Star power!
+                this.boss.takeDamage(dmg);
+                HUD.addFloater(`${dmg}`, this.boss.x + 16, this.boss.y - 4, '#ff8040');
             }
         }
 
         // Boss defeated
-        if (this.boss.isFullyDead()) {
+        if (this.boss && this.boss.isFullyDead()) {
             const power = this.boss.power;
-            this.player.powers.push(power);
-            PowerAward.show(power);
+            if (power) {
+                this.player.powers.push(power);
+                PowerAward.show(power);
+            } else {
+                // Generic reward for bosses > 10
+                Dialogue.show([
+                    `Du beseiret gigant-dragen!`,
+                    `Utrolig styrke!`,
+                ], 'Seier!');
+            }
             this.boss = null;
             this.state = STATE.OVERWORLD;
             this.spawner.reset();
@@ -268,6 +340,7 @@ const Game = {
                 const reward = chest.open();
                 if (reward) {
                     const results = this.player.gainExp(reward.exp || 0);
+                    if (reward.item) this.player.items.push(reward.item); // Real loot!
                     Dialogue.show([
                         `${chest.label}`,
                         `Du fant: ${reward.item}!`,
@@ -392,6 +465,14 @@ const Game = {
         };
     },
 
+    triggerGlobalSleep(time) {
+        this.globalStunTimer = time;
+        // Make enemies show sleep Zzz via visual change (in future), for now just stops them.
+    },
+    triggerGlobalFreeze(time) {
+        this.globalStunTimer = time;
+    },
+
     // ────────────────────────── RENDER ──────────────────────────────────
     render() {
         const ctx = this.ctx;
@@ -403,11 +484,36 @@ const Game = {
 
         if (this.state === STATE.LOADING) return;
 
+        // Follow player with camera
+        const targetCamX = this.player.x + this.player.w / 2 - (W / Camera.scale) / 2;
+        const targetCamY = this.player.y + this.player.h / 2 - (H / Camera.scale) / 2;
+        Camera.x += (targetCamX - Camera.x) * 0.1;
+        Camera.y += (targetCamY - Camera.y) * 0.1;
+
+        // Apply screen shake
+        let renderCamX = Camera.x;
+        let renderCamY = Camera.y;
+        if (this.screenShake > 0) {
+            renderCamX += (Math.random() - 0.5) * 10 * this.screenShake;
+            renderCamY += (Math.random() - 0.5) * 10 * this.screenShake;
+
+            // Apply earthqauke damage if just started shaking loudly
+            if (this.screenShake > 0.45 && this.state !== STATE.INTERIOR) {
+                const dmg = 10 + this.player.level;
+                for (const e of this.spawner.enemies) { e.takeDamage(dmg); HUD.addFloater(`${dmg}`, e.x, e.y, '#c08040'); }
+                if (this.boss && !this.boss.dead) { this.boss.takeDamage(dmg); HUD.addFloater(`${dmg}`, this.boss.x, this.boss.y, '#c08040'); }
+                this.screenShake = 0.4; // prevent double hit
+            }
+        }
+
+        ctx.save();
+        ctx.scale(Camera.scale, Camera.scale);
+        ctx.translate(-Math.floor(renderCamX), -Math.floor(renderCamY));
+
         // Choose active map
         const map = (this.state === STATE.INTERIOR) ? this._interiorMap() : this.currentMap;
 
         // ── World space (camera-transformed) ────────────────────────
-        Camera.begin(ctx);
         Renderer.drawMap(ctx, map, Camera.x, Camera.y, W, H, Camera.scale);
         Renderer.drawEntities(ctx, this.interiorNPCs, this.interiorChests);
         if (this.state !== STATE.INTERIOR) {
@@ -433,6 +539,8 @@ const Game = {
         Dialogue.draw(ctx, W, H);
         LevelUp.draw(ctx, W, H);
         PowerAward.draw(ctx, W, H);
+        Inventory.draw(ctx, W, H);
+        FullMap.draw(ctx, W, H);
     },
 
     _drawInteractionHints(ctx) {

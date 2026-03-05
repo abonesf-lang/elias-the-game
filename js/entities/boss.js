@@ -17,18 +17,18 @@ class Boss {
     constructor(x, y, bossNumber) {
         this.x = x;
         this.y = y;
-        this.w = 32;
-        this.h = 32;
+        this.w = 32 + (bossNumber - 1) * 8;
+        this.h = 32 + (bossNumber - 1) * 8;
         this.bossNumber = bossNumber;
 
-        // Scale with boss number
-        const scale = 1 + (bossNumber - 1) * 0.4;
-        this.maxHp = Math.floor(80 * scale);
+        // Scale with boss number (much harder scaling)
+        const scale = 1 + (bossNumber - 1) * 0.8 + Math.pow(bossNumber * 0.5, 2);
+        this.maxHp = Math.floor(150 * scale);
         this.hp = this.maxHp;
-        this.atk = Math.floor(5 * scale);
-        this.speed = 40 + bossNumber * 5;
+        this.atk = Math.floor(10 * scale);
+        this.speed = 50 + bossNumber * 6;
 
-        this.power = DRAGON_POWERS[(bossNumber - 1) % DRAGON_POWERS.length];
+        this.power = bossNumber <= DRAGON_POWERS.length ? DRAGON_POWERS[bossNumber - 1] : null;
         this.dead = false;
         this.deathTimer = 0;
 
@@ -67,12 +67,17 @@ class Boss {
         this.animTimer += dt;
         this.wingFlap += dt * (this.phase === 2 ? 4 : 2.5);
 
-        // Move toward player
+        // Move toward player (unless stealthed)
         this.moveTimer -= dt;
         if (this.moveTimer <= 0) {
             this.moveTimer = 1.5;
-            this.targetX = player.x + (Math.random() - 0.5) * 60;
-            this.targetY = player.y + (Math.random() - 0.5) * 60;
+            if (player.isStealth) {
+                this.targetX = this.x + (Math.random() - 0.5) * 100;
+                this.targetY = this.y + (Math.random() - 0.5) * 100;
+            } else {
+                this.targetX = player.x + (Math.random() - 0.5) * 60;
+                this.targetY = player.y + (Math.random() - 0.5) * 60;
+            }
         }
         const dx = this.targetX - this.x;
         const dy = this.targetY - this.y;
@@ -114,84 +119,107 @@ class Boss {
             return;
         }
 
+        if (Game.globalStunTimer > 0) ctx.filter = 'saturate(50%) hue-rotate(-30deg) brightness(120%)';
+
         // Phase 2 glow aura
         if (this.phase === 2) {
             ctx.globalAlpha = 0.3;
             ctx.fillStyle = '#ff4000';
             ctx.beginPath();
-            ctx.ellipse(x + 16, y + 16 + bob, 28, 24, 0, 0, Math.PI * 2);
+            ctx.ellipse(x + this.w / 2, y + this.h / 2 + bob, this.w * 0.8, this.h * 0.7, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.globalAlpha = 1;
         }
 
+        // Palette select
+        const pArray = [
+            { main: '#305820', belly: '#60a040', wing: '#204810', outline: '#306020' }, // Grass
+            { main: '#803000', belly: '#c05020', wing: '#602010', outline: '#803020' }, // Fire
+            { main: '#104080', belly: '#4080c0', wing: '#082040', outline: '#104080' }, // Ice
+            { main: '#605030', belly: '#908050', wing: '#403020', outline: '#504020' }, // Earth
+            { main: '#401060', belly: '#8040a0', wing: '#200830', outline: '#401060' }, // Void
+        ];
+        const p1 = pArray[(this.bossNumber - 1) % pArray.length];
+        const p2 = pArray[Math.min(this.bossNumber, pArray.length - 1)]; // Enraged palette
+        const pal = this.phase === 2 ? p2 : p1;
+
+        // Scale factor for drawing
+        const s = this.w / 32;
+
+        ctx.save();
+        ctx.translate(x, y + bob);
+        ctx.scale(s, s);
+
         // ── Dragon body ──────────────────────────────
         // Tail
-        ctx.fillStyle = '#2a6010';
-        ctx.fillRect(x - 8, y + 18 + bob, 10, 6);
-        ctx.fillRect(x - 12, y + 20 + bob, 6, 4);
+        ctx.fillStyle = pal.wing;
+        ctx.fillRect(-8, 18, 10, 6);
+        ctx.fillRect(-12, 20, 6, 4);
 
         // Body
-        ctx.fillStyle = this.phase === 2 ? '#803000' : '#305820';
-        ctx.fillRect(x + 2, y + 10 + bob, 22, 18);
+        ctx.fillStyle = pal.main;
+        ctx.fillRect(2, 10, 22, 18);
         // Belly
-        ctx.fillStyle = this.phase === 2 ? '#c05020' : '#60a040';
-        ctx.fillRect(x + 6, y + 14 + bob, 14, 12);
+        ctx.fillStyle = pal.belly;
+        ctx.fillRect(6, 14, 14, 12);
 
         // Wings (animated flap)
         const wA = Math.sin(this.wingFlap) * 8;
-        ctx.fillStyle = this.phase === 2 ? '#602010' : '#204810';
+        ctx.fillStyle = pal.wing;
         ctx.beginPath();
-        ctx.moveTo(x + 4, y + 12 + bob);
-        ctx.lineTo(x - 14, y + 4 + bob - wA);
-        ctx.lineTo(x - 4, y + 18 + bob);
+        ctx.moveTo(4, 12);
+        ctx.lineTo(-14, 4 - wA);
+        ctx.lineTo(-4, 18);
         ctx.closePath();
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(x + 22, y + 12 + bob);
-        ctx.lineTo(x + 38, y + 4 + bob - wA);
-        ctx.lineTo(x + 28, y + 18 + bob);
+        ctx.moveTo(22, 12);
+        ctx.lineTo(38, 4 - wA);
+        ctx.lineTo(28, 18);
         ctx.closePath();
         ctx.fill();
         // Wing membrane lines
-        ctx.strokeStyle = this.phase === 2 ? '#803020' : '#306020';
+        ctx.strokeStyle = pal.outline;
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(x + 4, y + 12 + bob); ctx.lineTo(x - 8, y + 10 + bob - wA);
-        ctx.moveTo(x + 4, y + 12 + bob); ctx.lineTo(x - 14, y + 8 + bob - wA * 0.5);
+        ctx.moveTo(4, 12); ctx.lineTo(-8, 10 - wA);
+        ctx.moveTo(4, 12); ctx.lineTo(-14, 8 - wA * 0.5);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(x + 22, y + 12 + bob); ctx.lineTo(x + 32, y + 10 + bob - wA);
-        ctx.moveTo(x + 22, y + 12 + bob); ctx.lineTo(x + 38, y + 8 + bob - wA * 0.5);
+        ctx.moveTo(22, 12); ctx.lineTo(32, 10 - wA);
+        ctx.moveTo(22, 12); ctx.lineTo(38, 8 - wA * 0.5);
         ctx.stroke();
 
         // Neck & Head
-        ctx.fillStyle = this.phase === 2 ? '#803000' : '#305820';
-        ctx.fillRect(x + 8, y + 2 + bob, 12, 12);
+        ctx.fillStyle = pal.main;
+        ctx.fillRect(8, 2, 12, 12);
         // Head
-        ctx.fillRect(x + 6, y - 6 + bob, 16, 12);
+        ctx.fillRect(6, -6, 16, 12);
         // Snout
-        ctx.fillStyle = this.phase === 2 ? '#c05020' : '#60a040';
-        ctx.fillRect(x + 8, y - 3 + bob, 14, 7);
+        ctx.fillStyle = pal.belly;
+        ctx.fillRect(8, -3, 14, 7);
         // Nostrils
         ctx.fillStyle = '#101010';
-        ctx.fillRect(x + 10, y - 2 + bob, 2, 2);
-        ctx.fillRect(x + 16, y - 2 + bob, 2, 2);
+        ctx.fillRect(10, -2, 2, 2);
+        ctx.fillRect(16, -2, 2, 2);
         // Eyes
-        ctx.fillStyle = '#ffe000';
-        ctx.fillRect(x + 9, y - 5 + bob, 4, 4);
-        ctx.fillRect(x + 18, y - 5 + bob, 4, 4);
+        ctx.fillStyle = this.phase === 2 ? '#ff2020' : '#ffe000';
+        ctx.fillRect(9, -5, 4, 4);
+        ctx.fillRect(18, -5, 4, 4);
         ctx.fillStyle = '#101010';
-        ctx.fillRect(x + 10, y - 4 + bob, 2, 2);
-        ctx.fillRect(x + 19, y - 4 + bob, 2, 2);
+        ctx.fillRect(10, -4, 2, 2);
+        ctx.fillRect(19, -4, 2, 2);
         // Horns
         ctx.fillStyle = '#e0c000';
-        ctx.fillRect(x + 9, y - 10 + bob, 3, 6);
-        ctx.fillRect(x + 19, y - 10 + bob, 3, 6);
+        ctx.fillRect(9, -10, 3, 6);
+        ctx.fillRect(19, -10, 3, 6);
         // Teeth / fire glow
         ctx.fillStyle = this.phase === 2 ? '#ff6000' : '#ffffff';
-        ctx.fillRect(x + 10, y - 1 + bob, 2, 3);
-        ctx.fillRect(x + 14, y - 1 + bob, 2, 3);
-        ctx.fillRect(x + 18, y - 1 + bob, 2, 3);
+        ctx.fillRect(10, -1, 2, 3);
+        ctx.fillRect(14, -1, 2, 3);
+        ctx.fillRect(18, -1, 2, 3);
+
+        ctx.restore();
 
         // HP bar
         ctx.fillStyle = '#600000';
@@ -206,8 +234,10 @@ class Boss {
         ctx.fillStyle = '#ffd000';
         ctx.font = '4px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(`🐉 Drage Lv.${this.bossNumber * 10}`, x + 16, y - 22 + bob);
+        ctx.fillText(`🐉 Drage Lv.${this.bossNumber * 10}`, x + this.w / 2, y - 22 + bob);
         ctx.textAlign = 'left';
+
+        ctx.filter = 'none';
     }
 
     _drawDeathEffect(ctx) {

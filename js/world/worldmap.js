@@ -1,7 +1,7 @@
 // worldmap.js — The overworld tile map (80×60 grid)
 // Each value is a TILE constant
 
-const WORLD_COLS = 80;
+const WORLD_COLS = 240;
 const WORLD_ROWS = 60;
 
 // Helper shorthand
@@ -18,6 +18,19 @@ const ST = TILE.STONE;
 const DR = TILE.DOOR;
 const FN = TILE.FENCE;
 const TG = TILE.TALL_GRASS;
+
+// Desert
+const DS = TILE.DESERT_SAND;
+const CA = TILE.CACTUS;
+const RR = TILE.RED_ROCK;
+const DB = TILE.DEAD_BUSH;
+
+// Snow
+const SN = TILE.SNOW;
+const IC = TILE.ICE;
+const PT = TILE.PINE_TREE;
+const FR = TILE.FROZEN_ROCK;
+const SP = TILE.SNOW_PATH;
 
 // Build map as a flat array [row * WORLD_COLS + col]
 function buildWorldMap() {
@@ -47,17 +60,38 @@ function buildWorldMap() {
         if (fill !== undefined) rect(col + 1, row + 1, w - 2, h - 2, fill);
     }
 
-    // ── Scattered grass variants & flowers ─────────────────────────────
+    // ── Zone 1: Scattered grass variants & flowers (0 - 79) ────────
     const rng = (s) => { let x = Math.sin(s) * 10000; return x - Math.floor(x); };
     for (let r = 0; r < WORLD_ROWS; r++) {
-        for (let c = 0; c < WORLD_COLS; c++) {
+        for (let c = 0; c < 80; c++) {
             const v = rng(r * 137 + c * 19);
             if (v < 0.1) set(c, r, G2);
             if (v > 0.92) set(c, r, FL);
         }
     }
 
-    // ── Water lake (center-left) ────────────────────────────────────────
+    // ── Zone 2: Desert Base (80 - 159) ─────────────────────────────
+    rect(80, 0, 80, WORLD_ROWS, DS);
+    for (let r = 0; r < WORLD_ROWS; r++) {
+        for (let c = 80; c < 160; c++) {
+            const v = rng(r * 83 + c * 41);
+            if (v < 0.04) set(c, r, DB);
+            else if (v > 0.94) set(c, r, CA);
+            else if (v > 0.91) set(c, r, RR);
+        }
+    }
+
+    // ── Zone 3: Snow Base (160 - 239) ──────────────────────────────
+    rect(160, 0, 80, WORLD_ROWS, SN);
+    for (let r = 0; r < WORLD_ROWS; r++) {
+        for (let c = 160; c < 240; c++) {
+            const v = rng(r * 101 + c * 67);
+            if (v < 0.1) set(c, r, PT);
+            else if (v > 0.95) set(c, r, FR);
+        }
+    }
+
+    // ── Water lake (Grasslands center-left) ────────────────────────
     rect(8, 18, 12, 8, W);
     rect(9, 17, 10, 1, W);
     rect(8, 26, 12, 1, SA);
@@ -67,21 +101,33 @@ function buildWorldMap() {
     hline(7, 18, 1, SA); hline(20, 18, 1, SA);
     hline(7, 25, 14, SA);
 
-    // ── Main dirt paths ────────────────────────────────────────────────
-    // Vertical spine: col 30
+    // ── Main dirt/stone paths ──────────────────────────────────────────
+    // Spine through Grasslands
     vline(30, 0, WORLD_ROWS, P);
-    // Horizontal main road: row 30
+    // Main horizontal road crossing all zones (row 30)
     hline(0, 30, WORLD_COLS, P);
-    // Branch north-west
+
+    // Grasslands branches
     vline(15, 0, 30, P);
-    // Branch east side
     vline(55, 0, WORLD_ROWS, P);
-    // Horizontal cross roads
     hline(0, 12, 30, P);
     hline(30, 45, 50, P);
     hline(55, 15, 25, P);
 
-    // ── Trees: forest top-left ─────────────────────────────────────────
+    // Desert spine
+    vline(120, 0, WORLD_ROWS, P);
+    hline(100, 15, 40, P);
+    hline(80, 45, 40, P);
+
+    // Snow spine (using snow path)
+    vline(200, 0, WORLD_ROWS, SP);
+    hline(180, 15, 40, SP);
+    hline(180, 45, 40, SP);
+
+    // Smooth the horizontal main road through Snow as snow path
+    hline(160, 30, 80, SP);
+
+    // ── Trees: Grassland forests ──────────────────────────────────
     for (let r = 0; r < 12; r++) {
         for (let c = 0; c < 14; c++) {
             const v = rng(r * 53 + c * 71);
@@ -90,24 +136,43 @@ function buildWorldMap() {
     }
     // Forest right side
     for (let r = 5; r < 25; r++) {
-        for (let c = 62; c < WORLD_COLS; c++) {
+        for (let c = 62; c < 78; c++) {
             const v = rng(r * 29 + c * 43);
             if (v < 0.5) set(c, r, TR);
         }
     }
     // Forest bottom
     for (let r = 52; r < WORLD_ROWS; r++) {
-        for (let c = 35; c < WORLD_COLS; c++) {
+        for (let c = 35; c < 78; c++) {
             const v = rng(r * 61 + c * 37);
             if (v < 0.45) set(c, r, TR);
         }
     }
 
+    // Border walls between zones (with a gap at row 30)
+    vline(79, 0, 30, ST); vline(79, 31, 29, ST);
+    vline(159, 0, 30, RR); vline(159, 31, 29, RR);
+
     // ── Tall grass patches (encounter zones) ──────────────────────────
+    // Grass
     rect(32, 5, 8, 5, TG);
     rect(40, 33, 10, 6, TG);
     rect(5, 35, 8, 4, TG);
     rect(20, 48, 12, 5, TG);
+    // Desert
+    rect(90, 10, 8, 5, DB);
+    rect(130, 35, 10, 8, DB);
+    // Snow
+    rect(170, 10, 10, 5, SN);
+    rect(210, 35, 12, 8, SN);
+
+    // ── Oasis (Desert) ────────────────────────────────────────────────
+    rect(140, 48, 8, 6, W);
+    rectBorder(139, 47, 10, 8, SA);
+
+    // ── Frozen Lake (Snow) ────────────────────────────────────────────
+    rect(175, 5, 12, 8, IC);
+    rectBorder(174, 4, 14, 10, SN);
 
     // ── Stone walls / ruins ────────────────────────────────────────────
     hline(35, 22, 10, ST);
@@ -139,6 +204,13 @@ function buildWorldMap() {
     rect(4, 44, 5, 4, B); set(6, 47, DR);
     hline(3, 48, 14, FN);
 
+    // ── Desert Ruins / Village ────────────────────────────────────────
+    rect(100, 20, 6, 5, B); set(103, 24, DR);
+    rect(125, 40, 8, 5, B); set(128, 44, DR);
+
+    // ── Snow Cabin ────────────────────────────────────────────────────
+    rect(205, 15, 6, 5, B); set(208, 19, DR);
+
     // ── Cave 1: north-east mountains ──────────────────────────────────
     rect(58, 5, 6, 4, ST);
     set(60, 8, CV);
@@ -148,15 +220,28 @@ function buildWorldMap() {
     rect(2, 50, 6, 4, ST);
     set(4, 53, CV);
 
-    // ── Cave 3: deep east ─────────────────────────────────────────────
+    // ── Cave 3: deep east grass ───────────────────────────────────────
     rect(72, 35, 6, 4, ST);
     set(74, 38, CV);
 
+    // ── Cave 4: Desert tomb ───────────────────────────────────────────
+    rect(145, 10, 6, 4, RR);
+    set(147, 13, CV);
+
+    // ── Cave 5: Ice Cave ──────────────────────────────────────────────
+    rect(220, 50, 6, 4, FR);
+    set(222, 53, CV);
+
     // ── Clear paths over structures (ensure walkable routes) ──────────
-    // Main horizontal road clear
+    // Clear the main cross-zone road perfectly
     hline(0, 30, WORLD_COLS, P);
+    hline(160, 30, 80, SP); // snow path
+
     vline(30, 0, WORLD_ROWS, P);
     vline(55, 0, WORLD_ROWS, P);
+    vline(120, 0, WORLD_ROWS, P);
+    vline(200, 0, WORLD_ROWS, SP);
+
     hline(0, 12, 15, P);
     hline(30, 45, 50, P);
     hline(55, 15, 25, P);
@@ -181,6 +266,13 @@ const WorldMap = {
         { col: 61, row: 8, interior: 'cave1', label: 'Hule 1' },
         { col: 4, row: 53, interior: 'cave2', label: 'Gammel grotte' },
         { col: 74, row: 38, interior: 'cave3', label: 'Dypet' },
+        // Desert Portals
+        { col: 103, row: 24, interior: 'house2', label: 'Ørkenhus' }, // reusing interior maps for now to save space
+        { col: 128, row: 44, interior: 'shop', label: 'Ørkenbasar' },
+        { col: 147, row: 13, interior: 'cave2', label: 'Faraos Grav' },
+        // Snow Portals
+        { col: 208, row: 19, interior: 'house3', label: 'Snøhytte' },
+        { col: 222, row: 53, interior: 'cave3', label: 'Ishallen' },
     ],
 
     get(col, row) {

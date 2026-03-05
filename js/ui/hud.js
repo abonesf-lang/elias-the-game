@@ -72,14 +72,57 @@ const HUD = {
         ctx.fillText(`${player.exp}/${player.expToNext} EXP`, canvasW - 4, expBarY + 4);
         ctx.textAlign = 'left';
 
-        // ── Special powers ───────────────────────────────────────
-        if (player.powers.length > 0) {
-            const py = canvasH - 34;
-            for (let i = 0; i < player.powers.length; i++) {
-                const pw = player.powers[i];
-                ctx.font = '9px monospace';
-                ctx.fillText(pw.icon, canvasW - 14 - i * 14, py + 8);
+        // ── Minimap (Top Right)
+        if (Game.state === STATE.OVERWORLD || Game.state === STATE.BOSS) {
+            const mmSize = 60;
+            const mmX = canvasW - mmSize - 10;
+            const mmY = 10;
+
+            ctx.fillStyle = '#111';
+            ctx.fillRect(mmX - 2, mmY - 2, mmSize + 4, mmSize + 4);
+
+            const pc = Math.floor(player.x / TILE_SIZE);
+            const pr = Math.floor(player.y / TILE_SIZE);
+
+            // Draw a tiny 30x30 chunk of the worldmap around player
+            const chunk = 30;
+            const startC = Math.max(0, Math.min(WorldMap.cols - chunk, pc - chunk / 2));
+            const startR = Math.max(0, Math.min(WorldMap.rows - chunk, pr - chunk / 2));
+
+            const scale = mmSize / chunk;
+            for (let dc = 0; dc < chunk; dc++) {
+                for (let dr = 0; dr < chunk; dr++) {
+                    const tile = WorldMap.get(startC + dc, startR + dr);
+                    ctx.fillStyle = FullMap._getMapColor(tile);
+                    ctx.fillRect(mmX + dc * scale, mmY + dr * scale, scale, scale);
+                }
             }
+
+            // Player dot
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(mmX + (pc - startC) * scale - 1, mmY + (pr - startR) * scale - 1, 3, 3);
+
+            ctx.strokeStyle = '#d8c080';
+            ctx.strokeRect(mmX - 2, mmY - 2, mmSize + 4, mmSize + 4);
+        }
+
+        // ── Active Power ───────────────────────────────────────
+        if (player.activePower) {
+            const py = 10;
+            const px = 10;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(px, py, 40, 40);
+            ctx.strokeStyle = '#00ff00';
+            ctx.strokeRect(px, py, 40, 40);
+
+            ctx.fillStyle = player.activePower.color;
+            ctx.fillRect(px + 10, py + 10, 20, 20); // Icon placeholder
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '6px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('[F]', px + 20, py + 48);
+            ctx.textAlign = 'left';
         }
 
         // ── Floating EXP gain numbers (drawn in world space, scaled) ──

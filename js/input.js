@@ -4,7 +4,7 @@ const Input = {
 
     init() {
         window.addEventListener('keydown', e => {
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'b', 'B', 'm', 'M', 'f', 'F', 'l', 'L'].includes(e.key)) {
                 e.preventDefault();
             }
             if (!this.keys[e.key] || !this.keys[e.key].held) {

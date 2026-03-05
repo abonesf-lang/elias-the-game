@@ -35,11 +35,21 @@ const CRITTER_TYPES = [
 let _enemyId = 0;
 
 class Enemy {
-    constructor(x, y, typeIndex) {
+    constructor(x, y, zoneMultiplier = 1) {
         this.id = _enemyId++;
-        const type = CRITTER_TYPES[typeIndex !== undefined ? typeIndex : Math.floor(Math.random() * CRITTER_TYPES.length)];
+        const typeIndex = Math.floor(Math.random() * CRITTER_TYPES.length);
+        const type = CRITTER_TYPES[typeIndex];
         Object.assign(this, type);
+
+        // Scale stats by zone
+        this.hp = Math.floor(this.hp * zoneMultiplier);
         this.maxHp = this.hp;
+        this.exp = Math.floor(this.exp * zoneMultiplier);
+        this.atk = Math.floor(this.atk * zoneMultiplier);
+
+        // Visual tinting based on zone multiplier
+        this.zoneStyle = zoneMultiplier;
+
         this.x = x;
         this.y = y;
         this.w = this.size;
@@ -100,8 +110,9 @@ class Enemy {
         const dist = Math.sqrt(pdx * pdx + pdy * pdy);
 
         // State transitions
-        if (dist < 60) {
-            this.state = 'chase';
+        if (dist < 60 && (!player.isStealth || this.state === 'chase')) {
+            if (!player.isStealth) this.state = 'chase';
+            else this.state = 'wander'; // lose aggro if player pops stealth
         } else if (player.attacking && dist < 80) {
             this.state = 'flee';
             this.stateTimer = 2;
@@ -166,6 +177,11 @@ class Enemy {
             return;
         }
 
+        // Frozen visually?
+        if (Game.globalStunTimer > 0) {
+            ctx.filter = 'saturate(50%) hue-rotate(-30deg) brightness(120%)';
+        }
+
         // HP bar above enemy (only when damaged)
         if (this.hp < this.maxHp) {
             ctx.fillStyle = '#600000';
@@ -181,6 +197,7 @@ class Enemy {
             case 'bird': this._drawBird(ctx, x, y + bob); break;
             case 'spider': this._drawSpider(ctx, x, y + bob); break;
         }
+        ctx.filter = 'none';
     }
 
     _drawBlob(ctx, x, y) {
@@ -275,6 +292,12 @@ class EnemySpawner {
     reset() { this.enemies = []; this.spawnTimer = 0; }
 
     spawnNear(player, currentMap) {
+        // Find zone multiplier based on player's X coordinate (0-79: 1x, 80-159: Desert 2.5x, 160-239: Snow 5x)
+        const pcol = Math.floor(player.x / TILE_SIZE);
+        let zoneMult = 1;
+        if (pcol >= 80 && pcol < 160) zoneMult = 3;
+        if (pcol >= 160) zoneMult = 6;
+
         // spawn at a random position off-screen but within map
         for (let attempt = 0; attempt < 20; attempt++) {
             const angle = Math.random() * Math.PI * 2;
@@ -284,7 +307,7 @@ class EnemySpawner {
             const col = Math.floor(sx / TILE_SIZE);
             const row = Math.floor(sy / TILE_SIZE);
             if (!currentMap.isSolid(col, row)) {
-                this.enemies.push(new Enemy(sx, sy));
+                this.enemies.push(new Enemy(sx, sy, zoneMult));
                 break;
             }
         }
