@@ -80,3 +80,164 @@ body {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
 }
+
+/* ── Fritekst-notatbok overlay ───────────────────────────── */
+#notebook-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;          /* JS sets to 'flex' when open */
+  flex-direction: column;
+  background: rgba(4, 4, 12, 0.96);
+  z-index: 300;
+  transition: none;
+}
+
+#notebook-overlay.coexist {
+  /* Sits on the right half when letter-reader is open on the left */
+  left: 50%;
+  background: rgba(4, 4, 12, 0.98);
+}
+
+#notebook-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 10px;
+  border: 2px solid #c8a84b;
+  outline: 1px solid #7a5a14;
+  outline-offset: 3px;
+  background: #0e0b06;
+  overflow: hidden;
+}
+
+#notebook-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid #7a5a14;
+  background: #130f08;
+  color: #f0c830;
+  font-size: 7px;
+  flex-shrink: 0;
+}
+
+#notebook-close-btn {
+  background: #1e1810;
+  border: 1px solid #7a5a14;
+  color: #c8a84b;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+#notebook-close-btn:hover {
+  background: #2e2818;
+  color: #f0c830;
+}
+
+/* Two-column body */
+#notebook-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+#notebook-hints-pane {
+  width: 44%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #4a3410;
+  overflow: hidden;
+}
+
+#notebook-notes-pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nb-pane-header {
+  padding: 5px 8px;
+  font-size: 5px;
+  color: #c8a84b;
+  background: #110e06;
+  border-bottom: 1px solid #4a3410;
+  flex-shrink: 0;
+}
+
+/* Hint list (titles) */
+#notebook-hints-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  min-height: 0;
+}
+
+.hint-item {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px;
+  color: #a08040;
+  cursor: pointer;
+  padding: 5px 8px;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid #2a1e08;
+  line-height: 1.5;
+}
+
+.hint-item:hover {
+  background: #1e1508;
+  color: #d4a840;
+}
+
+.hint-item.nb-active {
+  background: #2a1e08;
+  color: #f0c830;
+  border-left: 2px solid #c8a84b;
+}
+
+/* Hint detail / content area */
+#notebook-hint-detail {
+  height: 42%;
+  flex-shrink: 0;
+  border-top: 1px solid #4a3410;
+  padding: 6px 8px;
+  overflow-y: auto;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px;
+  color: #c8b070;
+  line-height: 2;
+  background: #0c0a04;
+  white-space: pre-wrap;
+}
+
+/* Freetext textarea */
+#notebook-text {
+  flex: 1;
+  resize: none;
+  background: #0a0804;
+  color: #e8d8a0;
+  border: none;
+  padding: 10px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  line-height: 2;
+  outline: none;
+  overflow-y: auto;
+  caret-color: #f0c830;
+  min-height: 0;
+}
+
+#notebook-text::placeholder {
+  color: #44380e;
+  line-height: 2;
+}

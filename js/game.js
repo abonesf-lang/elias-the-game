@@ -33,6 +33,10 @@ const Game = {
     screenShake: 0,
     globalStunTimer: 0,
 
+    // Narrative globals
+    currentStormLevel: 0,
+    clockDirection: 'backwards',
+
     // UI state
     pendingBoss: false,
     bossQueue: [],
@@ -101,6 +105,19 @@ const Game = {
             return; // pause gameplay while talking
         }
         if (LevelUp.active || PowerAward.active) return;
+
+        // ── N key: toggle notebook (works even when letter-reader is open) ──
+        if (Input.isJust('n') || Input.isJust('N')) {
+            if (Notebook.active) Notebook.close();
+            else Notebook.open();
+        }
+
+        // UI overlays: capture state BEFORE updates, then block gameplay if any were open
+        const _uiWasActive = Inventory.active || Notebook.active || LetterReader.active;
+        Inventory.update(dt);
+        Notebook.update(dt);
+        LetterReader.update(dt);
+        if (_uiWasActive) return;
 
         // Inventory / Map full-screen overrides
         if (Inventory.active) {
@@ -340,13 +357,39 @@ const Game = {
             if (Math.abs(cc - tile.col) <= 1 && Math.abs(cr - tile.row) <= 1) {
                 const reward = chest.open();
                 if (reward) {
+                    const msgs = [`${chest.label}`];
+
+                    // Regular item (add to inventory as object with optional letter)
+                    if (reward.item) {
+                        this.player.items.push({
+                            name: reward.item,
+                            letter: reward.letter || null,
+                            equipped: false,
+                        });
+                        msgs.push(`Du fant: ${reward.item}!`);
+                    }
+
+                    // Permanent stat boost
+                    if (reward.statBoost) {
+                        this.player.maxHp += reward.statBoost;
+                        this.player.hp = this.player.maxHp;
+                        msgs.push(`+${reward.statBoost} Maks HP permanent!`);
+                    }
+
+                    // EXP reward
                     const results = this.player.gainExp(reward.exp || 0);
-                    if (reward.item) this.player.items.push(reward.item); // Real loot!
-                    Dialogue.show([
-                        `${chest.label}`,
-                        `Du fant: ${reward.item}!`,
-                        `+${reward.exp} EXP`,
-                    ], '📦 Kiste');
+                    if (reward.exp) msgs.push(`+${reward.exp} EXP`);
+
+                    // Letter: open the letter-reader after dialogue closes
+                    if (reward.letter) {
+                        msgs.push('Du fant noe å lese...');
+                        const letter = reward.letter;
+                        Dialogue.show(msgs, '📦 Kiste', () => {
+                            LetterReader.show(letter.title, letter.body);
+                        });
+                    } else {
+                        Dialogue.show(msgs, '📦 Kiste');
+                    }
                     this._handleLevelResults(results);
                 } else {
                     Dialogue.show(['Kisten er allerede åpnet.'], '📦 Tom kiste');
@@ -540,7 +583,9 @@ const Game = {
         Dialogue.draw(ctx, W, H);
         LevelUp.draw(ctx, W, H);
         PowerAward.draw(ctx, W, H);
+        LetterReader.draw(ctx, W, H);
         Inventory.draw(ctx, W, H);
+        Notebook.draw(ctx, W, H);
         FullMap.draw(ctx, W, H);
     },
 

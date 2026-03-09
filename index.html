@@ -22,6 +22,30 @@
                 <div>⎵ Space — Angrip / Interager</div>
             </div>
         </div>
+
+        <!-- Fritekst-notatbok (HTML textarea + lagrede hint) -->
+        <div id="notebook-overlay">
+            <div id="notebook-panel">
+                <div id="notebook-header">
+                    <span>📓 NOTATBOKEN</span>
+                    <button id="notebook-close-btn">[ESC] Lukk</button>
+                </div>
+                <div id="notebook-body">
+                    <!-- Venstre: Lagrede hint fra verdenen -->
+                    <div id="notebook-hints-pane">
+                        <div class="nb-pane-header">📌 LAGREDE HINT</div>
+                        <div id="notebook-hints-list"></div>
+                        <div id="notebook-hint-detail"></div>
+                    </div>
+                    <!-- Høyre: Spillerens egne notater -->
+                    <div id="notebook-notes-pane">
+                        <div class="nb-pane-header">✏️ EGNE NOTATER</div>
+                        <textarea id="notebook-text"
+                            placeholder="Skriv dine egne notater her...&#10;&#10;Les brevene og lappene du finner,&#10;trykk [S] for å lagre et hint,&#10;og noter det som virker viktig.&#10;&#10;Ingen hjelper deg — bare dine egne ord."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts loaded in order -->

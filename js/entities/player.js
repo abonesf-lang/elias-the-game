@@ -29,6 +29,10 @@ class Player {
         this.powers = [];            // special powers from dragons
         this.activePower = null;
         this.items = [];
+        // items: { name: string, letter?: {title,body}, equipped: boolean }[]
+        this.equippedItem = null;    // currently equipped item object (or null)
+        this.notebookHints = [];     // { title, body }[] — saved from LetterReader with [S]
+        this.notebookText  = '';     // player's own freetext notes (Outer Wilds style)
 
         // Active Power Effects
         this.activeEffects = []; // for lingering things like fire
