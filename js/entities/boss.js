@@ -22,7 +22,7 @@ class Boss {
         this.bossNumber = bossNumber;
 
         // Scale with boss number (much harder scaling)
-        const scale = 1 + (bossNumber - 1) * 0.8 + Math.pow(bossNumber * 0.5, 2);
+        const scale = 1 + (bossNumber - 1) * 0.8 + Math.pow(bossNumber * 0.3, 2);
         this.maxHp = Math.floor(150 * scale);
         this.hp = this.maxHp;
         this.atk = Math.floor(10 * scale);

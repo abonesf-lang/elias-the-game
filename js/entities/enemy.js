@@ -3,31 +3,31 @@ const CRITTER_TYPES = [
     {
         name: 'Blåslime',
         color: '#4080d0', eyeColor: '#ffffff',
-        hp: 8, exp: 10, atk: 2, speed: 25,
+        hp: 18, exp: 10, atk: 2, speed: 25,
         size: 10, shape: 'blob',
     },
     {
         name: 'Rødmaur',
         color: '#c03020', legColor: '#801010',
-        hp: 5, exp: 7, atk: 1, speed: 40,
+        hp: 12, exp: 7, atk: 1, speed: 40,
         size: 9, shape: 'bug',
     },
     {
         name: 'Grønnorm',
         color: '#308040', spotColor: '#204d28',
-        hp: 12, exp: 14, atk: 3, speed: 20,
+        hp: 25, exp: 14, atk: 3, speed: 20,
         size: 11, shape: 'worm',
     },
     {
         name: 'Grå kråke',
         color: '#707880', wingColor: '#505860',
-        hp: 6, exp: 9, atk: 2, speed: 50,
+        hp: 14, exp: 9, atk: 2, speed: 50,
         size: 10, shape: 'bird',
     },
     {
         name: 'Liten edderkopp',
         color: '#504040', legColor: '#402020',
-        hp: 10, exp: 12, atk: 2, speed: 35,
+        hp: 22, exp: 12, atk: 2, speed: 35,
         size: 10, shape: 'spider',
     },
 ];
@@ -285,8 +285,8 @@ class EnemySpawner {
     constructor() {
         this.enemies = [];
         this.spawnTimer = 0;
-        this.spawnInterval = 4; // seconds between spawns
-        this.maxEnemies = 12;
+        this.spawnInterval = 2; // seconds between spawns
+        this.maxEnemies = 20;
     }
 
     reset() { this.enemies = []; this.spawnTimer = 0; }
@@ -299,7 +299,7 @@ class EnemySpawner {
         if (pcol >= 160) zoneMult = 6;
 
         // spawn at a random position off-screen but within map
-        for (let attempt = 0; attempt < 20; attempt++) {
+        for (let attempt = 0; attempt < 50; attempt++) {
             const angle = Math.random() * Math.PI * 2;
             const dist = 120 + Math.random() * 80; // spawn ring distance
             const sx = Math.floor(player.x + Math.cos(angle) * dist);
@@ -314,8 +314,14 @@ class EnemySpawner {
     }
 
     update(dt, player, currentMap) {
-        // Remove fully-dead enemies
-        this.enemies = this.enemies.filter(e => !(e.dead && e.deathTimer <= 0));
+        // Remove fully-dead enemies and enemies too far from player
+        this.enemies = this.enemies.filter(e => {
+            if (e.dead && e.deathTimer <= 0) return false;
+            const dx = e.x - player.x;
+            const dy = e.y - player.y;
+            if (dx * dx + dy * dy > 400 * 400) return false; // despawn beyond 400px
+            return true;
+        });
 
         // Spawn
         this.spawnTimer -= dt;

@@ -33,6 +33,10 @@ const Game = {
     screenShake: 0,
     globalStunTimer: 0,
 
+    // Narrative globals
+    currentStormLevel: 0,
+    clockDirection: 'backwards',
+
     // UI state
     pendingBoss: false,
     bossQueue: [],
@@ -102,6 +106,19 @@ const Game = {
         }
         if (LevelUp.active || PowerAward.active) return;
 
+        // ── N key: toggle notebook (works even when letter-reader is open) ──
+        if (Input.isJust('n') || Input.isJust('N')) {
+            if (Notebook.active) Notebook.close();
+            else Notebook.open();
+        }
+
+        // UI overlays: capture state BEFORE updates, then block gameplay if any were open
+        const _uiWasActive = Inventory.active || Notebook.active || LetterReader.active;
+        Inventory.update(dt);
+        Notebook.update(dt);
+        LetterReader.update(dt);
+        if (_uiWasActive) return;
+
         // Inventory / Map full-screen overrides
         if (Inventory.active) {
             Inventory.update(dt);
@@ -170,8 +187,9 @@ const Game = {
         for (const e of dead) {
             if (e._expGiven) continue;
             e._expGiven = true;
-            const results = this.player.gainExp(e.exp);
-            HUD.addFloater(`+${e.exp} EXP`, e.x + e.w / 2, e.y, '#ffff00');
+            const mobExp = Math.floor(5 * Math.pow(this.player.level, 1.5));
+            const results = this.player.gainExp(mobExp);
+            HUD.addFloater(`+${mobExp} EXP`, e.x + e.w / 2, e.y, '#ffff00');
             this._handleLevelResults(results);
         }
 
@@ -189,7 +207,7 @@ const Game = {
                 for (const e of this.spawner.enemies) {
                     if (!e.dead && !this.player.hitEntities.has(e.id) && rectsOverlap(ar, { x: e.x, y: e.y, w: e.w, h: e.h })) {
                         this.player.hitEntities.add(e.id);
-                        let dmg = 5 + this.player.level * 2;
+                        let dmg = Math.floor(5 + 3 * this.player.level + 0.05 * Math.pow(this.player.level, 2));
                         if (this.player.buffs && this.player.buffs.stjernekraft > 0) dmg *= 2; // Star power!
                         e.takeDamage(dmg);
                         HUD.addFloater(`${dmg}`, e.x + e.w / 2, e.y - 4, '#ff8040');
@@ -268,7 +286,7 @@ const Game = {
         if (ar && this.boss && !this.boss.dead && !this.player.hitEntities.has('boss')) {
             if (rectsOverlap(ar, { x: this.boss.x, y: this.boss.y, w: this.boss.w, h: this.boss.h })) {
                 this.player.hitEntities.add('boss');
-                let dmg = 5 + this.player.level * 2;
+                let dmg = Math.floor(5 + 3 * this.player.level + 0.05 * Math.pow(this.player.level, 2));
                 if (this.player.buffs && this.player.buffs.stjernekraft > 0) dmg *= 2; // Star power!
                 this.boss.takeDamage(dmg);
                 HUD.addFloater(`${dmg}`, this.boss.x + 16, this.boss.y - 4, '#ff8040');
@@ -339,13 +357,39 @@ const Game = {
             if (Math.abs(cc - tile.col) <= 1 && Math.abs(cr - tile.row) <= 1) {
                 const reward = chest.open();
                 if (reward) {
+                    const msgs = [`${chest.label}`];
+
+                    // Regular item (add to inventory as object with optional letter)
+                    if (reward.item) {
+                        this.player.items.push({
+                            name: reward.item,
+                            letter: reward.letter || null,
+                            equipped: false,
+                        });
+                        msgs.push(`Du fant: ${reward.item}!`);
+                    }
+
+                    // Permanent stat boost
+                    if (reward.statBoost) {
+                        this.player.maxHp += reward.statBoost;
+                        this.player.hp = this.player.maxHp;
+                        msgs.push(`+${reward.statBoost} Maks HP permanent!`);
+                    }
+
+                    // EXP reward
                     const results = this.player.gainExp(reward.exp || 0);
-                    if (reward.item) this.player.items.push(reward.item); // Real loot!
-                    Dialogue.show([
-                        `${chest.label}`,
-                        `Du fant: ${reward.item}!`,
-                        `+${reward.exp} EXP`,
-                    ], '📦 Kiste');
+                    if (reward.exp) msgs.push(`+${reward.exp} EXP`);
+
+                    // Letter: open the letter-reader after dialogue closes
+                    if (reward.letter) {
+                        msgs.push('Du fant noe å lese...');
+                        const letter = reward.letter;
+                        Dialogue.show(msgs, '📦 Kiste', () => {
+                            LetterReader.show(letter.title, letter.body);
+                        });
+                    } else {
+                        Dialogue.show(msgs, '📦 Kiste');
+                    }
                     this._handleLevelResults(results);
                 } else {
                     Dialogue.show(['Kisten er allerede åpnet.'], '📦 Tom kiste');
@@ -499,7 +543,7 @@ const Game = {
 
             // Apply earthqauke damage if just started shaking loudly
             if (this.screenShake > 0.45 && this.state !== STATE.INTERIOR) {
-                const dmg = 10 + this.player.level;
+                const dmg = Math.floor(5 + 3 * this.player.level + 0.05 * Math.pow(this.player.level, 2));
                 for (const e of this.spawner.enemies) { e.takeDamage(dmg); HUD.addFloater(`${dmg}`, e.x, e.y, '#c08040'); }
                 if (this.boss && !this.boss.dead) { this.boss.takeDamage(dmg); HUD.addFloater(`${dmg}`, this.boss.x, this.boss.y, '#c08040'); }
                 this.screenShake = 0.4; // prevent double hit
@@ -539,7 +583,9 @@ const Game = {
         Dialogue.draw(ctx, W, H);
         LevelUp.draw(ctx, W, H);
         PowerAward.draw(ctx, W, H);
+        LetterReader.draw(ctx, W, H);
         Inventory.draw(ctx, W, H);
+        Notebook.draw(ctx, W, H);
         FullMap.draw(ctx, W, H);
     },
 

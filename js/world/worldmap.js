@@ -184,6 +184,10 @@ function buildWorldMap() {
     set(20, 18, DR);
     hline(16, 19, 8, FN);
 
+    // Bridge from the path at col 15 across the lake to house1 door (same tile as the bridge at col 15)
+    hline(16, 18, 4, P); // cols 16–19 row 18: path bridge over water to the door
+    set(20, 19, P);      // clear fence tile directly in front of the door
+
     // ── Small house 2 (col 34, row 8) ─────────────────────────────────
     rect(34, 8, 5, 5, B);
     set(36, 12, DR);

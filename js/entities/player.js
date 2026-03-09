@@ -29,6 +29,10 @@ class Player {
         this.powers = [];            // special powers from dragons
         this.activePower = null;
         this.items = [];
+        // items: { name: string, letter?: {title,body}, equipped: boolean }[]
+        this.equippedItem = null;    // currently equipped item object (or null)
+        this.notebookHints = [];     // { title, body }[] — saved from LetterReader with [S]
+        this.notebookText  = '';     // player's own freetext notes (Outer Wilds style)
 
         // Active Power Effects
         this.activeEffects = []; // for lingering things like fire
@@ -50,7 +54,7 @@ class Player {
     }
 
     expForLevel(lvl) {
-        return Math.floor(20 * Math.pow(1.4, lvl - 1));
+        return Math.floor(20 * Math.pow(lvl, 2.2));
     }
 
     gainExp(amount) {
@@ -60,7 +64,7 @@ class Player {
             this.exp -= this.expToNext;
             this.level++;
             this.expToNext = this.expForLevel(this.level);
-            this.maxHp += 5;
+            this.maxHp = Math.floor(20 + 10 * (this.level - 1) + 0.1 * Math.pow(this.level, 2));
             this.hp = this.maxHp;
             results.push({ type: 'levelup', level: this.level });
             if (this.level % 10 === 0) results.push({ type: 'boss', level: this.level });
