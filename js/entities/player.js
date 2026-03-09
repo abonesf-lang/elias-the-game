@@ -50,7 +50,7 @@ class Player {
     }
 
     expForLevel(lvl) {
-        return Math.floor(20 * Math.pow(1.4, lvl - 1));
+        return Math.floor(20 * Math.pow(lvl, 2.2));
     }
 
     gainExp(amount) {
@@ -60,7 +60,7 @@ class Player {
             this.exp -= this.expToNext;
             this.level++;
             this.expToNext = this.expForLevel(this.level);
-            this.maxHp += 5;
+            this.maxHp = Math.floor(20 + 10 * (this.level - 1) + 0.1 * Math.pow(this.level, 2));
             this.hp = this.maxHp;
             results.push({ type: 'levelup', level: this.level });
             if (this.level % 10 === 0) results.push({ type: 'boss', level: this.level });

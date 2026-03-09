@@ -47,7 +47,7 @@ const INTERIORS = {
         '####################',
     ],
         [{ col: 9, row: 13, target: 'world', tx: 20, ty: 19 }], // exit door
-        [{ col: 15, row: 2, type: 'chest', reward: { exp: 50, item: 'Eplepai' }, label: '📦 Gammel kiste', opened: false }],
+        [{ col: 15, row: 2, type: 'chest', reward: { exp: 20, item: 'Eplepai' }, label: '📦 Gammel kiste', opened: false }],
         [{ col: 4, row: 8, name: 'Mamma', dialogue: ['Elias! Vær forsiktig der ute.', 'De smaa krypene er farlige tidlig om morgenen!'] }]
     ),
 
@@ -69,7 +69,7 @@ const INTERIORS = {
         '####################',
     ],
         [{ col: 9, row: 13, target: 'world', tx: 36, ty: 13 }],
-        [{ col: 15, row: 4, type: 'chest', reward: { exp: 30, item: 'Gulrot' }, label: '📦 Butikkhylle', opened: false }],
+        [{ col: 15, row: 4, type: 'chest', reward: { exp: 15, item: 'Gulrot' }, label: '📦 Butikkhylle', opened: false }],
         [{ col: 3, row: 4, name: 'Butikkmann', dialogue: ['Velkommen til butikken!', 'De beste krypjegerne kjøper ofte Gulrot.', '(Easter Egg: Prøv å komme tilbake om natten!)'] }]
     ),
 
@@ -91,7 +91,7 @@ const INTERIORS = {
         '####################',
     ],
         [{ col: 9, row: 13, target: 'world', tx: 60, ty: 23 }],
-        [{ col: 17, row: 1, type: 'chest', reward: { exp: 80, item: 'Mystisk stein' }, label: '📦 Skjult kiste', opened: false }],
+        [{ col: 17, row: 1, type: 'chest', reward: { exp: 35, item: 'Mystisk stein' }, label: '📦 Skjult kiste', opened: false }],
         [{ col: 4, row: 4, name: 'Gammel mann', dialogue: ['Jeg har sett mange krypjegere passere...', 'Den store dragen bor høyt oppe i fjellet.', '🐉 Hvert 10. level møter du den!'] }]
     ),
 
@@ -114,8 +114,8 @@ const INTERIORS = {
     ],
         [{ col: 8, row: 13, target: 'world', tx: 36, ty: 41 }],
         [
-            { col: 16, row: 2, type: 'chest', reward: { exp: 120, item: 'Gullkjede' }, label: '📦 Eventyrkiste', opened: false },
-            { col: 3, row: 12, type: 'chest', reward: { exp: 40, item: 'Gammel kart' }, label: '📦 Reisekiste', opened: false },
+            { col: 16, row: 2, type: 'chest', reward: { exp: 50, item: 'Gullkjede' }, label: '📦 Eventyrkiste', opened: false },
+            { col: 3, row: 12, type: 'chest', reward: { exp: 20, item: 'Gammel kart' }, label: '📦 Reisekiste', opened: false },
         ],
         [{
             col: 10, row: 3, name: 'Eventyrernes leder',
@@ -163,7 +163,7 @@ const INTERIORS = {
         '####################',
     ],
         [{ col: 5, row: 13, target: 'world', tx: 12, ty: 42 }],
-        [{ col: 15, row: 5, type: 'chest', reward: { exp: 60, item: 'Tre-sverd' }, label: '📦 Lekekiste', opened: false }],
+        [{ col: 15, row: 5, type: 'chest', reward: { exp: 25, item: 'Tre-sverd' }, label: '📦 Lekekiste', opened: false }],
         [{ col: 8, row: 6, name: 'Barn', dialogue: ['Vil du leke?', '🎮 Hemmelig: Trykk Space på blomstene utenfor!'] }]
     ),
 
@@ -186,8 +186,8 @@ const INTERIORS = {
     ],
         [{ col: 9, row: 13, target: 'world', tx: 60, ty: 9 }],
         [
-            { col: 17, row: 3, type: 'chest', reward: { exp: 200, item: 'Drage-egg fragment' }, label: '🐉 Mystisk kiste', opened: false },
-            { col: 3, row: 10, type: 'chest', reward: { exp: 100, item: 'Steinhjelm' }, label: '⛏️ Gruvekiste', opened: false },
+            { col: 17, row: 3, type: 'chest', reward: { exp: 80, item: 'Drage-egg fragment' }, label: '🐉 Mystisk kiste', opened: false },
+            { col: 3, row: 10, type: 'chest', reward: { exp: 40, item: 'Steinhjelm' }, label: '⛏️ Gruvekiste', opened: false },
         ],
         []
     ),
@@ -211,7 +211,7 @@ const INTERIORS = {
     ],
         [{ col: 5, row: 13, target: 'world', tx: 4, ty: 54 }],
         [
-            { col: 18, row: 1, type: 'chest', reward: { exp: 150, item: 'Fossekall-fjær' }, label: '💎 Gammel kiste', opened: false },
+            { col: 18, row: 1, type: 'chest', reward: { exp: 60, item: 'Fossekall-fjær' }, label: '💎 Gammel kiste', opened: false },
         ],
         [{ col: 10, row: 8, name: 'Huleånd', dialogue: ['Du er modig som tørr å komme hit.', '🌟 Easter Egg: Fossekallen synger om natten på innsjøen.'] }]
     ),
@@ -235,8 +235,8 @@ const INTERIORS = {
     ],
         [{ col: 5, row: 13, target: 'world', tx: 74, ty: 39 }],
         [
-            { col: 10, row: 4, type: 'chest', reward: { exp: 500, item: 'DRAGE-HJERTE' }, label: '🔥 Legendarisk kiste', opened: false },
-            { col: 17, row: 11, type: 'chest', reward: { exp: 250, item: 'Dype hemmelighet' }, label: '🌀 Mysteriøs kiste', opened: false },
+            { col: 10, row: 4, type: 'chest', reward: { exp: 150, item: 'DRAGE-HJERTE' }, label: '🔥 Legendarisk kiste', opened: false },
+            { col: 17, row: 11, type: 'chest', reward: { exp: 100, item: 'Dype hemmelighet' }, label: '🌀 Mysteriøs kiste', opened: false },
         ],
         [{ col: 3, row: 9, name: 'Ukjent stemme', dialogue: ['...', '...Du har kommet langt.', '🐉 Dragens ånd hviler her dyp nede.', 'Vær forberedt.'] }]
     ),

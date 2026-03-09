@@ -170,8 +170,9 @@ const Game = {
         for (const e of dead) {
             if (e._expGiven) continue;
             e._expGiven = true;
-            const results = this.player.gainExp(e.exp);
-            HUD.addFloater(`+${e.exp} EXP`, e.x + e.w / 2, e.y, '#ffff00');
+            const mobExp = Math.floor(5 * Math.pow(this.player.level, 1.5));
+            const results = this.player.gainExp(mobExp);
+            HUD.addFloater(`+${mobExp} EXP`, e.x + e.w / 2, e.y, '#ffff00');
             this._handleLevelResults(results);
         }
 
@@ -189,7 +190,7 @@ const Game = {
                 for (const e of this.spawner.enemies) {
                     if (!e.dead && !this.player.hitEntities.has(e.id) && rectsOverlap(ar, { x: e.x, y: e.y, w: e.w, h: e.h })) {
                         this.player.hitEntities.add(e.id);
-                        let dmg = 5 + this.player.level * 2;
+                        let dmg = Math.floor(5 + 3 * this.player.level + 0.05 * Math.pow(this.player.level, 2));
                         if (this.player.buffs && this.player.buffs.stjernekraft > 0) dmg *= 2; // Star power!
                         e.takeDamage(dmg);
                         HUD.addFloater(`${dmg}`, e.x + e.w / 2, e.y - 4, '#ff8040');
@@ -268,7 +269,7 @@ const Game = {
         if (ar && this.boss && !this.boss.dead && !this.player.hitEntities.has('boss')) {
             if (rectsOverlap(ar, { x: this.boss.x, y: this.boss.y, w: this.boss.w, h: this.boss.h })) {
                 this.player.hitEntities.add('boss');
-                let dmg = 5 + this.player.level * 2;
+                let dmg = Math.floor(5 + 3 * this.player.level + 0.05 * Math.pow(this.player.level, 2));
                 if (this.player.buffs && this.player.buffs.stjernekraft > 0) dmg *= 2; // Star power!
                 this.boss.takeDamage(dmg);
                 HUD.addFloater(`${dmg}`, this.boss.x + 16, this.boss.y - 4, '#ff8040');
@@ -499,7 +500,7 @@ const Game = {
 
             // Apply earthqauke damage if just started shaking loudly
             if (this.screenShake > 0.45 && this.state !== STATE.INTERIOR) {
-                const dmg = 10 + this.player.level;
+                const dmg = Math.floor(5 + 3 * this.player.level + 0.05 * Math.pow(this.player.level, 2));
                 for (const e of this.spawner.enemies) { e.takeDamage(dmg); HUD.addFloater(`${dmg}`, e.x, e.y, '#c08040'); }
                 if (this.boss && !this.boss.dead) { this.boss.takeDamage(dmg); HUD.addFloater(`${dmg}`, this.boss.x, this.boss.y, '#c08040'); }
                 this.screenShake = 0.4; // prevent double hit
