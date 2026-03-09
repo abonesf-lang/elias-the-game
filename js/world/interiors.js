@@ -29,7 +29,7 @@ function buildInterior(rows, portals, items, npcs) {
 
 const INTERIORS = {
 
-    // ── Hus 1: Elias' hjem (Gresslette 20, 19) ──────────────────────────
+    // ── Hus 1: Elias' hjem (Gresslette 23, 34) ──────────────────────────
     house1: buildInterior([
         '####################',
         '#..................#',
@@ -47,7 +47,7 @@ const INTERIORS = {
         '#.........D........#',
         '####################',
     ],
-        [{ col: 9, row: 13, target: 'world', tx: 20, ty: 19 }],
+        [{ col: 9, row: 13, target: 'world', tx: 23, ty: 34 }],
         [{ col: 15, row: 2, type: 'chest', reward: { item: 'Elias sine gamle notater', letter: { title: 'Elias sine gamle notater', body: 'Side 1, risset inn med usikker hånd:\n\n"Vannet husker..."\n\nDen første stormen kom ikke fra himmelen.\nDen kom innenfra.\n\nNoen prøvde å stoppe klokken.\nNoen feilet.\n\nSe etter vannet som faller.\nVann husker alltid.' } }, label: '📓 Gamle notater', opened: false }],
         [{ col: 4, row: 8, name: 'Mamma', dialogue: ['Elias... notatboken din.', 'Ikke glem hva du skrev før stormen tok det.', 'Se etter vannet som faller, Elias.', 'Vann husker alltid.'] }]
     ),

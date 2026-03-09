@@ -54,7 +54,7 @@ const Game = {
         Camera.init(CANVAS_W, CANVAS_H, WorldMap.pixelWidth(), WorldMap.pixelHeight());
 
         // Spawn player on the main road (col 30, row 28)
-        this.player = new Player(30 * TILE_SIZE, 28 * TILE_SIZE);
+        this.player = new Player(10 * TILE_SIZE, 10 * TILE_SIZE);
         this.spawner = new EnemySpawner();
         this.currentMap = WorldMap;
 
@@ -482,8 +482,8 @@ const Game = {
 
     _respawn() {
         this.player.hp = this.player.maxHp;
-        this.player.x = 30 * TILE_SIZE;
-        this.player.y = 28 * TILE_SIZE;
+        this.player.x = 10 * TILE_SIZE;
+        this.player.y = 10 * TILE_SIZE;
         this.state = STATE.OVERWORLD;
         this.currentMap = WorldMap;
         this.spawner.reset();
